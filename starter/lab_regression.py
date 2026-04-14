@@ -17,14 +17,14 @@ from sklearn.metrics import (classification_report, confusion_matrix,
                              mean_absolute_error, r2_score)
 
 
+
 def load_data(filepath="data/telecom_churn.csv"):
     """Load the telecom churn dataset.
 
     Returns:
         DataFrame with all columns.
     """
-    # TODO: Load the CSV and return the DataFrame
-    pass
+    return pd.read_csv(filepath)
 
 
 def split_data(df, target_col, test_size=0.2, random_state=42):
@@ -39,8 +39,14 @@ def split_data(df, target_col, test_size=0.2, random_state=42):
     Returns:
         Tuple of (X_train, X_test, y_train, y_test).
     """
-    # TODO: Separate features and target, then split with stratification
-    pass
+    
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+
+    try:
+        return train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
+    except ValueError:
+        return train_test_split(X, y, test_size=test_size, random_state=random_state)
 
 
 def build_logistic_pipeline():
@@ -49,8 +55,10 @@ def build_logistic_pipeline():
     Returns:
         sklearn Pipeline object.
     """
-    # TODO: Create and return a Pipeline with two steps
-    pass
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("classifier", LogisticRegression(max_iter=1000, random_state=42))
+    ])
 
 
 def build_ridge_pipeline():
@@ -59,8 +67,10 @@ def build_ridge_pipeline():
     Returns:
         sklearn Pipeline object.
     """
-    # TODO: Create and return a Pipeline for Ridge regression
-    pass
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("regressor", Ridge())
+    ])
 
 
 def evaluate_classifier(pipeline, X_train, X_test, y_train, y_test):
@@ -74,8 +84,15 @@ def evaluate_classifier(pipeline, X_train, X_test, y_train, y_test):
     Returns:
         Dictionary with keys: 'accuracy', 'precision', 'recall', 'f1'.
     """
-    # TODO: Fit the pipeline on training data, predict on test, compute metrics
-    pass
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
+    report = classification_report(y_test, y_pred, output_dict=True)
+    return {
+        "accuracy": report["accuracy"],
+        "precision": report["weighted avg"]["precision"],
+        "recall": report["weighted avg"]["recall"],
+        "f1": report["weighted avg"]["f1-score"]
+    }
 
 
 def evaluate_regressor(pipeline, X_train, X_test, y_train, y_test):
@@ -89,8 +106,12 @@ def evaluate_regressor(pipeline, X_train, X_test, y_train, y_test):
     Returns:
         Dictionary with keys: 'mae', 'r2'.
     """
-    # TODO: Fit the pipeline, predict, and compute MAE and R²
-    pass
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
+    return {
+        "mae": mean_absolute_error(y_test, y_pred),
+        "r2": r2_score(y_test, y_pred)
+    }
 
 
 def run_cross_validation(pipeline, X_train, y_train, cv=5):
@@ -105,8 +126,8 @@ def run_cross_validation(pipeline, X_train, y_train, cv=5):
     Returns:
         Array of cross-validation scores.
     """
-    # TODO: Run cross_val_score with StratifiedKFold
-    pass
+    skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
+    return cross_val_score(pipeline, X_train, y_train, cv=skf, scoring="accuracy")
 
 
 if __name__ == "__main__":
